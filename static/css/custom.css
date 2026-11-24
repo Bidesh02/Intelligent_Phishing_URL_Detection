@@ -1,0 +1,31 @@
+/* Custom styles for PhishGuard AI */
+@keyframes pulseGlow {
+    0%, 100% {
+        opacity: 0.6;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.9;
+        transform: scale(1.05);
+    }
+}
+
+.radar-sweep {
+    animation: pulseGlow 3s ease-in-out infinite;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #0a0e17;
+}
+::-webkit-scrollbar-thumb {
+    background: #1f293d;
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #0891b2;
+}

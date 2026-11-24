@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Scan History &amp; Audit Logs - PhishGuard AI{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+    <!-- Header & Stats Cards -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-cyber-border gap-4 mb-8">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center space-x-3">
+                <i class="fa-solid fa-clock-rotate-left text-cyan-400"></i>
+                <span>URL Threat History &amp; Audit Log</span>
+            </h1>
+            <p class="text-xs sm:text-sm text-gray-400 mt-1">Review all verified links, threat verdicts, and extracted timestamps.</p>
+        </div>
+
+        <form method="POST" action="{% url 'clear_history' %}" onsubmit="return confirm('Are you sure you want to clear all scan history?');">
+            {% csrf_token %}
+            <button type="submit" class="px-4 py-2 bg-cyber-card hover:bg-rose-950/60 text-gray-300 hover:text-rose-400 border border-cyber-border hover:border-rose-800 rounded-xl text-xs font-mono transition-all flex items-center space-x-2">
+                <i class="fa-solid fa-trash-can"></i>
+                <span>Clear History</span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Quick Stat Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 flex items-center justify-between">
+            <div>
+                <p class="text-xs text-gray-400 uppercase font-mono">Total URLs Scanned</p>
+                <p class="text-2xl font-extrabold text-white mt-1">{{ total_count }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-cyan-950 border border-cyan-800 text-cyan-400 flex items-center justify-center">
+                <i class="fa-solid fa-link text-lg"></i>
+            </div>
+        </div>
+
+        <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 flex items-center justify-between">
+            <div>
+                <p class="text-xs text-gray-400 uppercase font-mono">Phishing Threats Flagged</p>
+                <p class="text-2xl font-extrabold text-rose-400 mt-1">{{ phishing_count }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-rose-950 border border-rose-800 text-rose-400 flex items-center justify-center">
+                <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+            </div>
+        </div>
+
+        <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 flex items-center justify-between">
+            <div>
+                <p class="text-xs text-gray-400 uppercase font-mono">Legitimate Sites Verified</p>
+                <p class="text-2xl font-extrabold text-emerald-400 mt-1">{{ legitimate_count }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-emerald-950 border border-emerald-800 text-emerald-400 flex items-center justify-center">
+                <i class="fa-solid fa-shield-check text-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Controls -->
+    <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <form method="GET" action="{% url 'history' %}" class="flex items-center space-x-2 w-full sm:w-auto flex-grow max-w-md">
+            <div class="relative w-full">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                <input 
+                    type="text" 
+                    name="q" 
+                    value="{{ search_query }}" 
+                    placeholder="Search scanned URLs or domains..." 
+                    class="w-full pl-9 pr-3 py-2 bg-cyber-bg border border-cyber-border rounded-lg text-xs font-mono text-white placeholder-gray-500 focus:border-cyan-500 outline-none"
+                >
+            </div>
+            <button type="submit" class="px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shrink-0 transition-colors">
+                Search
+            </button>
+        </form>
+
+        <div class="flex items-center space-x-1 text-xs self-start sm:self-auto">
+            <a href="?filter=all{% if search_query %}&q={{ search_query }}{% endif %}" class="px-3 py-1.5 rounded-lg border font-mono transition-colors {% if filter_type == 'all' %}bg-cyan-950 text-cyan-300 border-cyan-800{% else %}bg-cyber-bg text-gray-400 border-cyber-border hover:text-white{% endif %}">
+                All ({{ total_count }})
+            </a>
+            <a href="?filter=phishing{% if search_query %}&q={{ search_query }}{% endif %}" class="px-3 py-1.5 rounded-lg border font-mono transition-colors {% if filter_type == 'phishing' %}bg-rose-950 text-rose-300 border-rose-800{% else %}bg-cyber-bg text-gray-400 border-cyber-border hover:text-white{% endif %}">
+                Phishing ({{ phishing_count }})
+            </a>
+            <a href="?filter=legitimate{% if search_query %}&q={{ search_query }}{% endif %}" class="px-3 py-1.5 rounded-lg border font-mono transition-colors {% if filter_type == 'legitimate' %}bg-emerald-950 text-emerald-300 border-emerald-800{% else %}bg-cyber-bg text-gray-400 border-cyber-border hover:text-white{% endif %}">
+                Legitimate ({{ legitimate_count }})
+            </a>
+        </div>
+    </div>
+
+    <!-- Scans Table -->
+    <div class="bg-cyber-card border border-cyber-border rounded-2xl overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs sm:text-sm">
+                <thead class="bg-cyber-bg/80 text-gray-400 uppercase font-mono text-[11px] border-b border-cyber-border">
+                    <tr>
+                        <th class="py-3.5 px-4">Threat Status</th>
+                        <th class="py-3.5 px-4">Scanned URL</th>
+                        <th class="py-3.5 px-4">Domain</th>
+                        <th class="py-3.5 px-4">Confidence</th>
+                        <th class="py-3.5 px-4 text-right">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-cyber-border font-mono">
+                    {% for scan in scans %}
+                    <tr class="hover:bg-cyber-cardHover/50 transition-colors">
+                        <td class="py-3.5 px-4 whitespace-nowrap">
+                            <span class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold {% if scan.is_phishing %}bg-rose-950 text-rose-300 border border-rose-800{% else %}bg-emerald-950 text-emerald-300 border border-emerald-800{% endif %}">
+                                <i class="fa-solid {% if scan.is_phishing %}fa-triangle-exclamation text-[10px]{% else %}fa-circle-check text-[10px]{% endif %}"></i>
+                                <span>{{ scan.prediction }}</span>
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4 max-w-xs truncate text-gray-200" title="{{ scan.url }}">
+                            <a href="{% url 'index' %}?url={{ scan.url|urlencode }}" class="hover:text-cyan-400 transition-colors">
+                                {{ scan.url }}
+                            </a>
+                        </td>
+                        <td class="py-3.5 px-4 text-gray-400 whitespace-nowrap">
+                            {{ scan.domain|default:"-" }}
+                        </td>
+                        <td class="py-3.5 px-4 whitespace-nowrap">
+                            <span class="{% if scan.is_phishing %}text-rose-400{% else %}text-emerald-400{% endif %} font-bold">
+                                {{ scan.confidence }}%
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4 text-right text-gray-500 text-xs whitespace-nowrap">
+                            {{ scan.scanned_at|date:"M d, Y H:i:s" }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="py-10 text-center text-gray-500 font-sans">
+                            <i class="fa-solid fa-inbox text-3xl mb-2 text-gray-600 block"></i>
+                            No scan records match your criteria.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

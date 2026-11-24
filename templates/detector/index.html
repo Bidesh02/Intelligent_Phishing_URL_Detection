@@ -1,0 +1,2159 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>PhishGuard.AI V2.0 — Intelligent URL Threat Detector</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans, Inter, and JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* =========================================================================
+       THEME DESIGN TOKENS (DEFAULT: DEEP CYBER-OBSIDIAN DARK MODE)
+       ========================================================================= */
+    :root {
+      --bg-primary: #040711;
+      --bg-secondary: #0b1120;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+
+      --glass-bg: rgba(15, 23, 42, 0.65);
+      --glass-bg-strong: rgba(15, 23, 42, 0.84);
+      --glass-border: rgba(148, 163, 184, 0.16);
+      --glass-highlight: rgba(56, 189, 248, 0.22);
+      --glass-shadow: 0 24px 60px -15px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+
+      --nav-bg: rgba(7, 11, 24, 0.78);
+      --nav-border: rgba(148, 163, 184, 0.14);
+
+      --input-bg: rgba(4, 7, 17, 0.75);
+      --input-border: rgba(148, 163, 184, 0.22);
+
+      --grid-color: rgba(56, 189, 248, 0.11);
+      --glare-core: rgba(56, 189, 248, 0.16);
+      --glare-edge: rgba(16, 185, 129, 0.06);
+      --orb-opacity: 0.36;
+    }
+
+    /* Light Mode Override Tokens (Current Light Porcelain Frontend) */
+    html.light-mode {
+      --bg-primary: #f6f9fc;
+      --bg-secondary: #edf2f8;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+
+      --glass-bg: rgba(255, 255, 255, 0.78);
+      --glass-bg-strong: rgba(255, 255, 255, 0.92);
+      --glass-border: rgba(255, 255, 255, 0.95);
+      --glass-highlight: rgba(14, 165, 233, 0.22);
+      --glass-shadow: 0 22px 48px -16px rgba(15, 23, 42, 0.09), 0 4px 14px -2px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+
+      --nav-bg: rgba(255, 255, 255, 0.82);
+      --nav-border: rgba(226, 232, 240, 0.9);
+
+      --input-bg: rgba(248, 250, 252, 0.92);
+      --input-border: rgba(203, 213, 225, 0.9);
+
+      --grid-color: rgba(148, 163, 184, 0.14);
+      --glare-core: rgba(255, 255, 255, 0.75);
+      --glare-edge: rgba(56, 189, 248, 0.1);
+      --orb-opacity: 0.32;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 0%, var(--bg-secondary) 0%, var(--bg-primary) 72%);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      min-height: 100vh;
+      transition: background-color 0.4s ease, color 0.35s ease;
+    }
+
+    /* Architectural Grid for Light Mode */
+    .architectural-grid {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(to right, rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: radial-gradient(ellipse 85% 75% at 50% 25%, #000 55%, transparent 100%);
+      -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 25%, #000 55%, transparent 100%);
+      display: none;
+    }
+
+    html.light-mode .architectural-grid {
+      display: block;
+    }
+
+    /* Perspective Grid for Cyber Dark Mode */
+    .perspective-grid-wrapper {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      perspective: 680px;
+    }
+
+    html.light-mode .perspective-grid-wrapper {
+      display: none;
+    }
+
+    .perspective-grid-plane {
+      position: absolute;
+      left: -35%;
+      right: -35%;
+      bottom: -25%;
+      height: 85vh;
+      background-image:
+        linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+      background-size: 56px 56px;
+      transform: rotateX(68deg);
+      transform-origin: center bottom;
+      animation: gridScroll 16s linear infinite;
+      mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.35) 55%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.35) 55%, transparent 100%);
+    }
+
+    @keyframes gridScroll {
+      0% { background-position: 0 0; }
+      100% { background-position: 0 56px; }
+    }
+
+    .aurora-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .aurora-orb {
+      position: absolute;
+      border-radius: 9999px;
+      filter: blur(105px);
+      opacity: var(--orb-opacity);
+      will-change: transform;
+      transition: opacity 0.4s ease;
+    }
+
+    .orb-cyan {
+      width: 520px;
+      height: 520px;
+      top: -130px;
+      left: -90px;
+      background: radial-gradient(circle, #06b6d4 0%, rgba(6, 182, 212, 0.12) 65%, transparent 100%);
+      animation: driftOrb1 20s ease-in-out infinite alternate;
+    }
+
+    .orb-emerald {
+      width: 480px;
+      height: 480px;
+      top: 10%;
+      right: -110px;
+      background: radial-gradient(circle, #10b981 0%, rgba(16, 185, 129, 0.1) 65%, transparent 100%);
+      animation: driftOrb2 24s ease-in-out infinite alternate;
+    }
+
+    .orb-indigo {
+      width: 560px;
+      height: 560px;
+      bottom: -180px;
+      left: 22%;
+      background: radial-gradient(circle, #6366f1 0%, rgba(99, 102, 241, 0.12) 65%, transparent 100%);
+      animation: driftOrb3 28s ease-in-out infinite alternate;
+    }
+
+    .orb-crimson {
+      width: 360px;
+      height: 360px;
+      bottom: 8%;
+      right: 12%;
+      background: radial-gradient(circle, #f43f5e 0%, rgba(244, 63, 94, 0.08) 65%, transparent 100%);
+      opacity: calc(var(--orb-opacity) * 0.6);
+      animation: driftOrb4 22s ease-in-out infinite alternate;
+    }
+
+    @keyframes driftOrb1 {
+      0% { transform: translate3d(0, 0, 0) scale(1); }
+      100% { transform: translate3d(95px, 70px, 0) scale(1.12); }
+    }
+    @keyframes driftOrb2 {
+      0% { transform: translate3d(0, 0, 0) scale(1); }
+      100% { transform: translate3d(-85px, 95px, 0) scale(1.1); }
+    }
+    @keyframes driftOrb3 {
+      0% { transform: translate3d(0, 0, 0) scale(1); }
+      100% { transform: translate3d(80px, -65px, 0) scale(1.15); }
+    }
+    @keyframes driftOrb4 {
+      0% { transform: translate3d(0, 0, 0) scale(0.95); }
+      100% { transform: translate3d(-65px, -50px, 0) scale(1.1); }
+    }
+
+    #spatial-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* =========================================================================
+       FROSTED GLASSMORPHISM & MAGNETIC 3D TILT CARDS
+       ========================================================================= */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      position: relative;
+      overflow: hidden;
+      transition: background-color 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+    }
+
+    .glass-nav {
+      background: var(--nav-bg);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border-bottom: 1px solid var(--nav-border);
+      transition: background-color 0.35s ease, border-color 0.35s ease;
+    }
+
+    .tilt-card {
+      transform-style: preserve-3d;
+      transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+      will-change: transform;
+    }
+
+    .tilt-card:hover {
+      border-color: var(--glass-highlight);
+    }
+
+    .glare-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: inherit;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      background: radial-gradient(circle 300px at var(--mx, 50%) var(--my, 50%), var(--glare-core), var(--glare-edge) 45%, transparent 72%);
+      z-index: 2;
+    }
+
+    .tilt-card:hover .glare-overlay {
+      opacity: 1;
+    }
+
+    /* =========================================================================
+       3D HOLOGRAPHIC ORBITING SHIELD EMBLEM (HERO)
+       ========================================================================= */
+    .hero-shield-stage {
+      perspective: 850px;
+      position: relative;
+      width: 104px;
+      height: 104px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      animation: shieldLevitate 4.8s ease-in-out infinite;
+    }
+
+    @keyframes shieldLevitate {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .holo-ring {
+      position: absolute;
+      border-radius: 9999px;
+      transform-style: preserve-3d;
+      pointer-events: none;
+    }
+
+    .holo-ring-1 {
+      width: 104px;
+      height: 104px;
+      border: 1.5px solid rgba(6, 182, 212, 0.65);
+      box-shadow: 0 0 18px rgba(6, 182, 212, 0.3);
+      animation: holoOrbit1 6.5s linear infinite;
+    }
+
+    .holo-ring-2 {
+      width: 90px;
+      height: 90px;
+      border: 1.5px dashed rgba(16, 185, 129, 0.65);
+      animation: holoOrbit2 8.2s linear infinite;
+    }
+
+    .holo-ring-3 {
+      width: 118px;
+      height: 118px;
+      border: 1px solid rgba(99, 102, 241, 0.45);
+      border-top-color: rgba(6, 182, 212, 0.9);
+      animation: holoOrbit3 10s linear infinite;
+    }
+
+    @keyframes holoOrbit1 {
+      0% { transform: rotateX(68deg) rotateY(16deg) rotateZ(0deg); }
+      100% { transform: rotateX(68deg) rotateY(16deg) rotateZ(360deg); }
+    }
+    @keyframes holoOrbit2 {
+      0% { transform: rotateX(54deg) rotateY(-46deg) rotateZ(360deg); }
+      100% { transform: rotateX(54deg) rotateY(-46deg) rotateZ(0deg); }
+    }
+    @keyframes holoOrbit3 {
+      0% { transform: rotateX(-58deg) rotateY(32deg) rotateZ(0deg); }
+      100% { transform: rotateX(-58deg) rotateY(32deg) rotateZ(360deg); }
+    }
+
+    /* =========================================================================
+       GLOWING LASER SCANLINE SWEEP DURING ANALYSIS
+       ========================================================================= */
+    .laser-sweep {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #06b6d4 25%, #10b981 50%, #06b6d4 75%, transparent);
+      box-shadow: 0 0 18px 4px rgba(6, 182, 212, 0.55), 0 0 36px 8px rgba(16, 185, 129, 0.25);
+      z-index: 20;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .laser-sweep.scanning {
+      opacity: 1;
+      animation: laserSweepAnim 1.35s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    @keyframes laserSweepAnim {
+      0% { top: 0%; opacity: 0; }
+      15% { opacity: 1; }
+      85% { opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    /* =========================================================================
+       GRADIENT HEADLINE, CTA BUTTON & RADAR RINGS
+       ========================================================================= */
+    .gradient-text-animated {
+      background: linear-gradient(90deg, #22d3ee, #06b6d4, #10b981, #34d399, #22d3ee);
+      background-size: 220% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: shimmerText 5.5s linear infinite;
+    }
+
+    @keyframes shimmerText {
+      0% { background-position: 0% center; }
+      100% { background-position: 220% center; }
+    }
+
+    .btn-analyze {
+      background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 45%, #10b981 100%);
+      background-size: 200% auto;
+      box-shadow: 0 0 24px rgba(6, 182, 212, 0.38), 0 10px 25px -8px rgba(16, 185, 129, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .btn-analyze:hover {
+      background-position: right center;
+      transform: translateY(-1.5px);
+      box-shadow: 0 0 32px rgba(16, 185, 129, 0.48), 0 14px 30px -8px rgba(6, 182, 212, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    }
+
+    .btn-analyze:active {
+      transform: translateY(0.5px) scale(0.985);
+    }
+
+    .radar-stage {
+      perspective: 750px;
+    }
+
+    .radar-ring {
+      position: absolute;
+      border-radius: 9999px;
+      transform-style: preserve-3d;
+    }
+
+    .radar-ring-1 {
+      width: 110px;
+      height: 110px;
+      border: 2px solid rgba(6, 182, 212, 0.55);
+      border-top-color: #10b981;
+      box-shadow: 0 0 18px rgba(6, 182, 212, 0.25);
+      animation: radarSpin1 1.3s linear infinite;
+    }
+
+    .radar-ring-2 {
+      width: 82px;
+      height: 82px;
+      border: 2px dashed rgba(56, 189, 248, 0.7);
+      animation: radarSpin2 1.7s linear infinite;
+    }
+
+    .radar-ring-3 {
+      width: 54px;
+      height: 54px;
+      border: 2px solid rgba(99, 102, 241, 0.6);
+      border-bottom-color: #22d3ee;
+      animation: radarSpin3 1.05s linear infinite;
+    }
+
+    @keyframes radarSpin1 {
+      0% { transform: rotateX(62deg) rotateY(10deg) rotateZ(0deg); }
+      100% { transform: rotateX(62deg) rotateY(10deg) rotateZ(360deg); }
+    }
+    @keyframes radarSpin2 {
+      0% { transform: rotateX(55deg) rotateY(-35deg) rotateZ(360deg); }
+      100% { transform: rotateX(55deg) rotateY(-35deg) rotateZ(0deg); }
+    }
+    @keyframes radarSpin3 {
+      0% { transform: rotateX(-50deg) rotateY(40deg) rotateZ(0deg); }
+      100% { transform: rotateX(-50deg) rotateY(40deg) rotateZ(360deg); }
+    }
+
+    /* =========================================================================
+       STAGGERED 3D VIEW TRANSITIONS & SLIDING NAV PILL
+       ========================================================================= */
+    .view-section {
+      display: none;
+      opacity: 0;
+      transform: perspective(1200px) translateY(20px) scale(0.98);
+      transition: opacity 0.36s cubic-bezier(0.22, 1, 0.36, 1), transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .view-section.active-view {
+      display: block;
+    }
+
+    .view-section.visible-view {
+      opacity: 1;
+      transform: perspective(1200px) translateY(0) scale(1);
+    }
+
+    #nav-pill-indicator {
+      transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), width 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes pingSlow {
+      0% { transform: scale(1); opacity: 0.9; }
+      75%, 100% { transform: scale(2.2); opacity: 0; }
+    }
+    .pulse-ring {
+      animation: pingSlow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+
+    .feature-bar-fill {
+      transition: width 1.05s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .gauge-progress {
+      transition: stroke-dashoffset 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .cyber-input {
+      background-color: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text-primary);
+    }
+
+    .cyber-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.2);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.45);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(6, 182, 212, 0.65);
+    }
+  </style>
+</head>
+
+<body class="font-sans antialiased selection:bg-cyan-500/30 selection:text-cyan-200 flex flex-col min-h-screen">
+
+  <!-- Background Layers: Architectural Grid (Light Mode) or Perspective Grid (Dark Mode), Aurora Orbs, and 3D Interactive Canvas -->
+  <div class="architectural-grid" aria-hidden="true"></div>
+  <div class="perspective-grid-wrapper" aria-hidden="true">
+    <div class="perspective-grid-plane"></div>
+  </div>
+
+  <div class="aurora-layer" aria-hidden="true">
+    <div class="aurora-orb orb-cyan"></div>
+    <div class="aurora-orb orb-emerald"></div>
+    <div class="aurora-orb orb-indigo"></div>
+    <div class="aurora-orb orb-crimson"></div>
+  </div>
+  <canvas id="spatial-canvas" aria-hidden="true"></canvas>
+
+  <!-- =========================================================================
+       PERSISTENT TOP NAVIGATION BAR
+       ========================================================================= -->
+  <header class="glass-nav sticky top-0 z-40 w-full">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+
+      <!-- Left: Glowing Shield Logo + Brand -->
+      <button onclick="switchTab('scanner', true)" class="flex items-center gap-3 text-left group focus:outline-none cursor-pointer" aria-label="PhishGuard.AI Home">
+        <div class="relative w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 via-teal-400 to-emerald-500 flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.45)] group-hover:scale-105 transition-transform shrink-0">
+          <svg class="w-5 h-5 text-slate-950 drop-shadow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            <path d="m9 12 2 2 4-4"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-display font-extrabold text-lg tracking-tight dark:text-white text-slate-900">PhishGuard<span class="text-cyan-500 dark:text-cyan-400">.AI</span></span>
+            <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-600 dark:text-cyan-300 border border-cyan-500/30 shadow-sm">V2.0</span>
+          </div>
+          <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-tight hidden sm:block">Intelligent URL Threat Detector</p>
+        </div>
+      </button>
+
+      <!-- Center: Floating Glass Pill Tab Switcher with Sliding Active Indicator -->
+      <nav class="relative flex items-center p-1 rounded-2xl bg-slate-200/75 dark:bg-slate-900/75 border border-slate-300/70 dark:border-slate-700/60 shadow-inner backdrop-blur-md order-3 lg:order-2 w-full lg:w-auto justify-between lg:justify-center" aria-label="Main Navigation">
+        <div id="nav-pill-indicator" class="absolute top-1 left-1 h-[calc(100%-8px)] rounded-xl bg-white dark:bg-slate-800/95 shadow-md dark:shadow-[0_0_16px_rgba(6,182,212,0.22)] border border-slate-200/80 dark:border-cyan-500/35 pointer-events-none"></div>
+
+        <button data-tab="scanner" onclick="switchTab('scanner')" class="nav-tab relative z-10 flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-cyan-600 dark:text-cyan-300 transition-colors cursor-pointer">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.3-4.3"></path>
+          </svg>
+          <span>Scanner</span>
+        </button>
+
+        <button data-tab="history" onclick="switchTab('history')" class="nav-tab relative z-10 flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors cursor-pointer">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+            <path d="M12 7v5l4 2"></path>
+          </svg>
+          <span>History</span>
+        </button>
+
+        <button data-tab="analytics" onclick="switchTab('analytics')" class="nav-tab relative z-10 flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors cursor-pointer">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+            <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+          </svg>
+          <span>Analytics</span>
+        </button>
+      </nav>
+
+      <!-- Right: Dark/Light Mode Toggle and Engine Status Pill -->
+      <div class="flex items-center gap-2.5 order-2 lg:order-3">
+        <!-- Dark / Light Mode Toggle Button -->
+        <button id="theme-toggle-btn" onclick="toggleTheme()" title="Switch Dark / Light Mode" class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 dark:bg-slate-900/75 hover:bg-white dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/70 text-slate-700 dark:text-cyan-300 shadow-sm transition-all cursor-pointer" aria-label="Toggle Dark or Light Mode">
+          <!-- Sun Icon (shown in Dark Mode to switch to Light) -->
+          <svg id="theme-icon-sun" class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2"></path>
+            <path d="M12 20v2"></path>
+            <path d="m4.93 4.93 1.41 1.41"></path>
+            <path d="m17.66 17.66 1.41 1.41"></path>
+            <path d="M2 12h2"></path>
+            <path d="M20 12h2"></path>
+            <path d="m6.34 17.66-1.41 1.41"></path>
+            <path d="m19.07 4.93-1.41 1.41"></path>
+          </svg>
+          <!-- Moon Icon (shown in Light Mode to switch to Dark) -->
+          <svg id="theme-icon-moon" class="w-4 h-4 hidden text-cyan-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+          </svg>
+          <span id="theme-text" class="font-mono text-xs font-semibold">Light</span>
+        </button>
+
+        <!-- Live Engine Status Badge -->
+        <div class="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.12)]">
+          <span class="relative flex h-2.5 w-2.5">
+            <span class="pulse-ring absolute inline-flex h-full w-full rounded-full bg-emerald-400"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          </span>
+          <span class="font-mono text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 tracking-tight whitespace-nowrap">RandomForest Engine Online</span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       MAIN CONTENT CONTAINER (3 VIEWS WITH STAGGERED 3D TRANSITIONS)
+       ========================================================================= -->
+  <main class="relative z-10 flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+
+    <!-- =======================================================================
+         VIEW 1: SCANNER
+         ======================================================================= -->
+    <section id="view-scanner" class="view-section active-view visible-view space-y-8">
+
+      <!-- Hero Section with 3D Holographic Orbiting Shield Emblem -->
+      <div class="text-center max-w-3xl mx-auto space-y-5">
+
+        <!-- 3D Holographic Orbiting Shield Emblem -->
+        <div class="hero-shield-stage" aria-hidden="true">
+          <div class="holo-ring holo-ring-3"></div>
+          <div class="holo-ring holo-ring-1"></div>
+          <div class="holo-ring holo-ring-2"></div>
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-400 via-teal-400 to-emerald-500 flex items-center justify-center shadow-[0_0_35px_rgba(6,182,212,0.5)] border border-white/40">
+            <svg class="w-7 h-7 text-slate-950 drop-shadow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <path d="m9 12 2 2 4-4"></path>
+            </svg>
+          </div>
+        </div>
+
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.12)] backdrop-blur-md">
+          <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+          <span class="font-mono text-xs font-semibold text-cyan-700 dark:text-cyan-300 tracking-wide">Machine Learning Security Engine • Random Forest</span>
+        </div>
+
+        <h1 class="font-display text-3xl sm:text-5xl lg:text-[3.4rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
+          Real-Time <span class="gradient-text-animated">Phishing URL</span> Detection
+        </h1>
+
+        <p class="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          Paste any suspicious link to instantly extract 50+ lexical and structural cybersecurity features and analyze threat probability with machine learning.
+        </p>
+      </div>
+
+      <!-- Main Scanner Card with Magnetic 3D Tilt & Laser Scanline Sweep -->
+      <div id="scanner-card" class="tilt-card glass-card rounded-3xl p-5 sm:p-8 max-w-4xl mx-auto">
+        <div class="glare-overlay"></div>
+        <div id="scanner-laser-line" class="laser-sweep"></div>
+
+        <div class="relative z-10 space-y-5">
+
+          <!-- Input Row -->
+          <form id="scanner-form" onsubmit="handleScanSubmit(event)" class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1 group">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-cyan-400 transition-colors">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+              </div>
+              <input
+                id="url-input"
+                type="text"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="e.g. https://paypal.com-login-verify.update-account.tk/auth"
+                class="cyber-input w-full pl-11 pr-11 py-4 rounded-2xl focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/20 font-mono text-sm outline-none transition-all shadow-inner"
+              />
+              <button
+                type="button"
+                id="clear-input-btn"
+                onclick="clearUrlInput()"
+                title="Clear input"
+                class="hidden absolute inset-y-0 right-2.5 my-auto w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+
+            <button
+              type="submit"
+              id="analyze-btn"
+              class="btn-analyze px-7 py-4 rounded-2xl text-slate-950 font-display font-extrabold text-sm sm:text-base flex items-center justify-center gap-2.5 shrink-0 cursor-pointer"
+            >
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <circle cx="12" cy="11" r="2.5"></circle>
+              </svg>
+              <span>Analyze URL</span>
+            </button>
+          </form>
+
+          <!-- Quick-Fill Sample URLs Row -->
+          <div class="flex flex-wrap items-center gap-2 pt-1">
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">Sample URLs:</span>
+
+            <button type="button" onclick="fillSampleUrl('https://www.google.com')" class="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-mono text-xs font-medium transition-all hover:-translate-y-0.5 cursor-pointer">
+              ✓ google.com
+            </button>
+
+            <button type="button" onclick="fillSampleUrl('https://github.com')" class="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-mono text-xs font-medium transition-all hover:-translate-y-0.5 cursor-pointer">
+              ✓ github.com
+            </button>
+
+            <button type="button" onclick="fillSampleUrl('http://192.168.1.105/paypal-login/verify')" class="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-700 dark:text-rose-300 font-mono text-xs font-medium transition-all hover:-translate-y-0.5 cursor-pointer">
+              ▲ 192.168.1.105 (IP Phish)
+            </button>
+
+            <button type="button" onclick="fillSampleUrl('https://chase-secure-login.verify-account.tk/auth')" class="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-700 dark:text-rose-300 font-mono text-xs font-medium transition-all hover:-translate-y-0.5 cursor-pointer">
+              ▲ Chase Impersonation
+            </button>
+          </div>
+
+          <!-- Interactive 3D Holographic Radar Scanner (1.4s Sequence) -->
+          <div id="radar-scan-panel" class="hidden pt-3">
+            <div class="rounded-2xl bg-slate-100/80 dark:bg-slate-950/75 border border-cyan-500/35 p-6 flex flex-col sm:flex-row items-center gap-6 shadow-[0_0_30px_rgba(6,182,212,0.12)]">
+              <div class="radar-stage relative w-28 h-28 flex items-center justify-center shrink-0">
+                <div class="radar-ring radar-ring-1"></div>
+                <div class="radar-ring radar-ring-2"></div>
+                <div class="radar-ring radar-ring-3"></div>
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-emerald-500 flex items-center justify-center shadow-[0_0_24px_rgba(6,182,212,0.5)] animate-pulse">
+                  <svg class="w-5 h-5 text-slate-950" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  </svg>
+                </div>
+              </div>
+              <div class="flex-1 text-center sm:text-left space-y-2.5 w-full">
+                <div class="flex items-center justify-center sm:justify-between">
+                  <span class="font-display font-bold text-slate-900 dark:text-white text-base">8D Holographic Lexical Extraction</span>
+                  <span id="radar-percent" class="font-mono text-xs font-bold text-cyan-600 dark:text-cyan-400 hidden sm:inline">0%</span>
+                </div>
+                <p id="radar-step-text" class="font-mono text-xs text-slate-600 dark:text-cyan-200/80">Initializing RandomForest feature vector pipeline...</p>
+                <div class="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                  <div id="radar-progress-bar" class="h-full rounded-full bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 shadow-[0_0_12px_rgba(6,182,212,0.6)] transition-all duration-200" style="width: 10%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Animated Verdict Result Card (Populated dynamically) -->
+          <div id="verdict-result-panel" class="hidden pt-2"></div>
+
+        </div>
+      </div>
+
+      <!-- Recent Security Scans Card -->
+      <div class="tilt-card glass-card rounded-3xl p-5 sm:p-7 max-w-4xl mx-auto">
+        <div class="glare-overlay"></div>
+        <div class="relative z-10">
+          <div class="flex items-center justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-700/60">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                  <path d="M3 3v5h5"></path>
+                  <path d="M12 7v5l4 2"></path>
+                </svg>
+              </div>
+              <h2 class="font-display font-bold text-lg text-slate-900 dark:text-white">Recent Security Scans</h2>
+            </div>
+
+            <button onclick="switchTab('history')" class="font-mono text-xs font-semibold text-cyan-600 dark:text-cyan-400 hover:text-emerald-500 dark:hover:text-emerald-300 flex items-center gap-1 group cursor-pointer transition-colors">
+              <span>View All Scans</span>
+              <span class="group-hover:translate-x-1 transition-transform">→</span>
+            </button>
+          </div>
+
+          <div id="recent-scans-list" class="divide-y divide-slate-200/70 dark:divide-slate-800/80 mt-1">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- =======================================================================
+         VIEW 2: HISTORY ("URL Threat History & Audit Log")
+         ======================================================================= -->
+    <section id="view-history" class="view-section space-y-7">
+
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-slate-800/90">
+        <div class="space-y-1">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.18)]">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <path d="M3 3v5h5"></path>
+                <path d="M12 7v5l4 2"></path>
+              </svg>
+            </div>
+            <h1 class="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">URL Threat History &amp; Audit Log</h1>
+          </div>
+          <p class="text-sm text-slate-600 dark:text-slate-400 sm:pl-[52px]">Review all verified links, threat verdicts, and extracted timestamps.</p>
+        </div>
+
+        <button onclick="openClearModal()" class="self-start sm:self-auto flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/80 dark:bg-slate-900/75 hover:bg-rose-500/15 border border-slate-200 dark:border-slate-700/70 hover:border-rose-500/40 text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-300 text-xs font-semibold shadow-sm transition-all cursor-pointer">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          <span>Clear History</span>
+        </button>
+      </div>
+
+      <!-- 3 KPI Summary Cards with 3D Tilt & Animated Counters -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <!-- Total URLs Scanned -->
+        <div class="tilt-card glass-card rounded-2xl p-6 flex items-center justify-between">
+          <div class="glare-overlay"></div>
+          <div class="relative z-10 space-y-1.5">
+            <p class="font-mono text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total URLs Scanned</p>
+            <p id="kpi-total-scans" class="font-display text-4xl font-extrabold text-slate-900 dark:text-white">0</p>
+          </div>
+          <div class="relative z-10 w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shadow-[0_0_18px_rgba(6,182,212,0.18)]">
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Phishing Threats Flagged -->
+        <div class="tilt-card glass-card rounded-2xl p-6 flex items-center justify-between">
+          <div class="glare-overlay"></div>
+          <div class="relative z-10 space-y-1.5">
+            <p class="font-mono text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Phishing Threats Flagged</p>
+            <p id="kpi-phishing-scans" class="font-display text-4xl font-extrabold text-rose-500">0</p>
+          </div>
+          <div class="relative z-10 w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-500 flex items-center justify-center shadow-[0_0_18px_rgba(244,63,94,0.18)]">
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Legitimate Sites Verified -->
+        <div class="tilt-card glass-card rounded-2xl p-6 flex items-center justify-between">
+          <div class="glare-overlay"></div>
+          <div class="relative z-10 space-y-1.5">
+            <p class="font-mono text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Legitimate Sites Verified</p>
+            <p id="kpi-legit-scans" class="font-display text-4xl font-extrabold text-emerald-500 dark:text-emerald-400">0</p>
+          </div>
+          <div class="relative z-10 w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400 flex items-center justify-center shadow-[0_0_18px_rgba(16,185,129,0.18)]">
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <path d="m9 12 2 2 4-4"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search & Filter Bar -->
+      <div class="glass-card rounded-2xl p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+        <div class="flex flex-1 gap-2.5">
+          <div class="relative flex-1">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.3-4.3"></path>
+              </svg>
+            </div>
+            <input
+              id="history-search-input"
+              type="text"
+              oninput="renderHistoryTable()"
+              placeholder="Search scanned URLs or domains..."
+              class="cyber-input w-full pl-10 pr-4 py-2.5 rounded-xl focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/15 text-sm outline-none transition-all"
+            />
+          </div>
+          <button onclick="renderHistoryTable()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-bold text-sm shadow-[0_0_16px_rgba(6,182,212,0.3)] transition-all cursor-pointer">
+            Search
+          </button>
+        </div>
+
+        <!-- Interactive Filter Pills -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="filter-btn-all" onclick="setHistoryFilter('all')" class="filter-pill px-3.5 py-2 rounded-xl font-mono text-xs font-semibold transition-all cursor-pointer">
+            All (0)
+          </button>
+          <button id="filter-btn-phishing" onclick="setHistoryFilter('phishing')" class="filter-pill px-3.5 py-2 rounded-xl font-mono text-xs font-semibold transition-all cursor-pointer">
+            Phishing (0)
+          </button>
+          <button id="filter-btn-legitimate" onclick="setHistoryFilter('legitimate')" class="filter-pill px-3.5 py-2 rounded-xl font-mono text-xs font-semibold transition-all cursor-pointer">
+            Legitimate (0)
+          </button>
+        </div>
+      </div>
+
+      <!-- Responsive Audit Table -->
+      <div class="glass-card rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse min-w-[720px]">
+            <thead>
+              <tr class="bg-slate-100/80 dark:bg-slate-900/75 border-b border-slate-200/80 dark:border-slate-800 font-mono text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <th class="py-4 px-5">Threat Status</th>
+                <th class="py-4 px-5">Scanned URL</th>
+                <th class="py-4 px-5">Domain</th>
+                <th class="py-4 px-5">Confidence</th>
+                <th class="py-4 px-5 text-right">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody id="history-table-body" class="divide-y divide-slate-200/70 dark:divide-slate-800/75 text-sm">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- =======================================================================
+         VIEW 3: ANALYTICS ("Machine Learning Model & System Analytics")
+         ======================================================================= -->
+    <section id="view-analytics" class="view-section space-y-7">
+
+      <!-- Header -->
+      <div class="space-y-1 pb-5 border-b border-slate-200/80 dark:border-slate-800/90">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.18)]">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+              <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+            </svg>
+          </div>
+          <h1 class="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Machine Learning Model &amp; System Analytics</h1>
+        </div>
+        <p class="text-sm text-slate-600 dark:text-slate-400 sm:pl-[52px]">Deep dive into model architecture, training performance, and feature importance.</p>
+      </div>
+
+      <!-- 4 Model Architecture KPI Cards with 3D Tilt -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="tilt-card glass-card rounded-2xl p-6 space-y-2">
+          <div class="glare-overlay"></div>
+          <div class="relative z-10">
+            <p class="font-mono text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Classifier Model</p>
+            <p class="font-display text-2xl font-extrabold text-slate-900 dark:text-white mt-1.5">Random Forest</p>
+            <p class="font-mono text-xs font-medium text-cyan-600 dark:text-cyan-400 mt-1">100 Estimators • n_jobs=-1</p>
+          </div>
+        </div>
+
+        <div class="tilt-card glass-card rounded-2xl p-6 space-y-2">
+          <div class="glare-overlay"></div>
+          <div class="relative z-10">
+            <p class="font-mono text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Test Accuracy</p>
+            <p class="font-display text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1.5">99.98%</p>
+            <p class="font-mono text-xs font-medium text-emerald-600/80 dark:text-emerald-400/80 mt-1">Validated on unseen split</p>
+          </div>
+        </div>
+
+        <div class="tilt-card glass-card rounded-2xl p-6 space-y-2">
+          <div class="glare-overlay"></div>
+          <div class="relative z-10">
+            <p class="font-mono text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Feature Dimension</p>
+            <p class="font-display text-2xl font-extrabold text-slate-900 dark:text-white mt-1.5">50 Features</p>
+            <p class="font-mono text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">Lexical + Web Structure</p>
+          </div>
+        </div>
+
+        <div class="tilt-card glass-card rounded-2xl p-6 space-y-2">
+          <div class="glare-overlay"></div>
+          <div class="relative z-10">
+            <p class="font-mono text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Training Dataset</p>
+            <p class="font-display text-2xl font-extrabold text-slate-900 dark:text-white mt-1.5">235,795 URLs</p>
+            <p class="font-mono text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">PhiUSIIL Benchmark</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Scan Traffic Breakdown Card -->
+      <div class="tilt-card glass-card rounded-3xl p-6 sm:p-8">
+        <div class="glare-overlay"></div>
+        <div class="relative z-10 space-y-6">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <span class="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                  <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                </svg>
+              </span>
+              <h2 class="font-display font-bold text-lg text-slate-900 dark:text-white">Live Scan Traffic Breakdown</h2>
+            </div>
+            <span class="font-mono text-xs text-cyan-600 dark:text-cyan-400/80">Real-Time Telemetry</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-200/80 dark:divide-slate-800 py-2">
+            <div class="text-center py-4 sm:py-2 space-y-1">
+              <p id="analytics-phish-pct" class="font-display text-4xl sm:text-5xl font-extrabold text-rose-500 drop-shadow-[0_0_16px_rgba(244,63,94,0.28)]">0.0%</p>
+              <p id="analytics-phish-count" class="font-mono text-xs font-medium text-slate-500 dark:text-slate-400">Phishing Detected (0)</p>
+            </div>
+            <div class="text-center py-4 sm:py-2 space-y-1">
+              <p id="analytics-legit-pct" class="font-display text-4xl sm:text-5xl font-extrabold text-emerald-500 dark:text-emerald-400 drop-shadow-[0_0_16px_rgba(16,185,129,0.28)]">100.0%</p>
+              <p id="analytics-legit-count" class="font-mono text-xs font-medium text-slate-500 dark:text-slate-400">Legitimate Sites (0)</p>
+            </div>
+          </div>
+
+          <!-- Glowing Animated Split Progress Bar -->
+          <div class="space-y-2">
+            <div class="w-full h-4 rounded-full bg-slate-200/80 dark:bg-slate-900/90 border border-slate-300/60 dark:border-slate-700/60 overflow-hidden flex p-0.5 shadow-inner">
+              <div id="traffic-bar-phish" class="h-full rounded-l-full bg-gradient-to-r from-rose-500 to-pink-500 shadow-[0_0_14px_rgba(244,63,94,0.65)] transition-all duration-700" style="width: 0%"></div>
+              <div id="traffic-bar-legit" class="h-full rounded-full bg-gradient-to-r from-cyan-400 via-emerald-400 to-emerald-500 shadow-[0_0_14px_rgba(16,185,129,0.65)] transition-all duration-700" style="width: 100%"></div>
+            </div>
+            <div class="flex justify-between font-mono text-[11px] text-slate-500 dark:text-slate-400">
+              <span>Threat Ratio</span>
+              <span>Safe Verification Ratio</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Lexical Feature Importance Card -->
+      <div class="tilt-card glass-card rounded-3xl p-6 sm:p-8">
+        <div class="glare-overlay"></div>
+        <div class="relative z-10 space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="font-display font-bold text-lg text-slate-900 dark:text-white">Top Lexical Feature Importance</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Gini impurity reduction weights from the Random Forest ensemble</p>
+            </div>
+            <span class="font-mono text-[11px] font-semibold px-3 py-1 rounded-full bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-500/30">PhiUSIIL Weights</span>
+          </div>
+
+          <div id="feature-importance-chart" class="space-y-4 pt-1">
+            <!-- Populated and animated dynamically -->
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- =========================================================================
+       PERSISTENT FOOTER
+       ========================================================================= -->
+  <footer class="relative z-10 w-full border-t border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-950/70 backdrop-blur-md mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+      <div class="flex items-center gap-2">
+        <span class="w-5 h-5 rounded-md bg-cyan-500/15 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+        </span>
+        <span>Trained on <strong class="text-slate-800 dark:text-slate-200 font-semibold">PhiUSIIL Phishing URL Dataset</strong> (56 Features)</span>
+      </div>
+
+      <div class="text-center font-medium">
+        Intelligent Phishing URL Detection System • Powered by Django &amp; Scikit-Learn
+      </div>
+
+      <div class="flex items-center gap-5 font-medium">
+        <button onclick="switchTab('scanner', true)" class="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors cursor-pointer">Scanner</button>
+        <button onclick="switchTab('history', true)" class="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors cursor-pointer">Scan Logs</button>
+        <button onclick="switchTab('analytics', true)" class="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors cursor-pointer">Model Metrics</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =========================================================================
+       GLASSMORPHIC CONFIRMATION MODAL FOR CLEAR HISTORY
+       ========================================================================= -->
+  <div id="clear-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md">
+    <div class="glass-card rounded-3xl max-w-md w-full p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200/80 dark:border-slate-700/80">
+      <div class="flex items-start gap-4">
+        <div class="w-11 h-11 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-500 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
+        <div>
+          <h3 class="font-display font-bold text-lg text-slate-900 dark:text-white">Clear Scan History?</h3>
+          <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">This will purge all logged URLs from the audit table, recent security scans, and live traffic breakdown.</p>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2.5 pt-2">
+        <button onclick="closeClearModal()" class="px-4 py-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-sm font-semibold transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button onclick="confirmClearHistory()" class="px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold shadow-[0_0_18px_rgba(244,63,94,0.4)] transition-colors cursor-pointer">
+          Clear All Logs
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- =========================================================================
+       APPLICATION JAVASCRIPT: THEME CONTROLLER, 3D TILT, ML SIMULATOR & DJANGO API
+       ========================================================================= -->
+  <script>
+    /* -------------------------------------------------------------------------
+       1. APPLICATION STATE
+       ------------------------------------------------------------------------- */
+    const serverScans = {{ scans_json|safe|default:"null" }};
+    const defaultScans = [
+      {
+        id: 1,
+        url: 'https://www.youtube.com/watch?v=71cw1NNCP1E',
+        domain: 'www.youtube.com',
+        status: 'Legitimate',
+        confidence: 67.0,
+        timestamp: 'Nov 24, 2026 18:56:37',
+      },
+      {
+        id: 2,
+        url: 'https://www.youtube.com/watch?v=P0XMXqDGttU&t=360s',
+        domain: 'www.youtube.com',
+        status: 'Legitimate',
+        confidence: 64.0,
+        timestamp: 'Nov 24, 2026 18:54:45',
+      },
+      {
+        id: 3,
+        url: 'https://www.youtube.com/watch?v=P0XMXqDGttU&t=360s',
+        domain: 'www.youtube.com',
+        status: 'Legitimate',
+        confidence: 64.0,
+        timestamp: 'Nov 24, 2026 18:54:45',
+      },
+    ];
+
+    const state = {
+      theme: 'dark',
+      activeTab: '{{ active_tab|default:"scanner" }}',
+      historyFilter: 'all',
+      isScanning: false,
+      warpIntensity: 0,
+      scans: Array.isArray(serverScans) && serverScans.length > 0 ? serverScans : defaultScans,
+      featureImportance: [
+        { name: 'HTTPS & SSL Presence', weight: 24.6, color: 'from-cyan-400 to-emerald-400', glow: 'shadow-[0_0_12px_rgba(6,182,212,0.5)]' },
+        { name: 'URL Shannon Entropy', weight: 19.8, color: 'from-sky-400 to-cyan-400', glow: 'shadow-[0_0_12px_rgba(56,189,248,0.5)]' },
+        { name: 'Suspicious Brand Tokens', weight: 17.4, color: 'from-indigo-400 to-cyan-400', glow: 'shadow-[0_0_12px_rgba(99,102,241,0.5)]' },
+        { name: 'Subdomain Depth', weight: 14.5, color: 'from-emerald-400 to-teal-400', glow: 'shadow-[0_0_12px_rgba(16,185,129,0.5)]' },
+        { name: 'IP-Based Hostname', weight: 12.9, color: 'from-rose-400 to-pink-500', glow: 'shadow-[0_0_12px_rgba(244,63,94,0.45)]' },
+        { name: 'URL Length Ratio', weight: 10.8, color: 'from-violet-400 to-indigo-400', glow: 'shadow-[0_0_12px_rgba(139,92,246,0.45)]' },
+      ],
+    };
+
+    /* -------------------------------------------------------------------------
+       2. DYNAMIC THEME SWITCHER (DARK MODE <-> LIGHT PORCELAIN MODE)
+       ------------------------------------------------------------------------- */
+    function applyTheme(theme) {
+      state.theme = theme;
+      localStorage.setItem('phishguard-theme', theme);
+      const htmlEl = document.documentElement;
+      const sunIcon = document.getElementById('theme-icon-sun');
+      const moonIcon = document.getElementById('theme-icon-moon');
+      const themeText = document.getElementById('theme-text');
+
+      if (theme === 'light') {
+        htmlEl.classList.remove('dark');
+        htmlEl.classList.add('light-mode');
+        if (sunIcon && moonIcon) {
+          sunIcon.classList.add('hidden');
+          moonIcon.classList.remove('hidden');
+        }
+        if (themeText) themeText.textContent = 'Dark';
+      } else {
+        htmlEl.classList.remove('light-mode');
+        htmlEl.classList.add('dark');
+        if (sunIcon && moonIcon) {
+          moonIcon.classList.add('hidden');
+          sunIcon.classList.remove('hidden');
+        }
+        if (themeText) themeText.textContent = 'Light';
+      }
+    }
+
+    function toggleTheme() {
+      const nextTheme = state.theme === 'dark' ? 'light' : 'dark';
+      applyTheme(nextTheme);
+      showToast(nextTheme === 'dark' ? 'Switched to Cyber Dark Mode' : 'Switched to Porcelain Light Mode', 'info');
+    }
+
+    /* -------------------------------------------------------------------------
+       3. NAVIGATION & STAGGERED 3D VIEW TRANSITIONS
+       ------------------------------------------------------------------------- */
+    function updateNavIndicator() {
+      const activeBtn = document.querySelector(`.nav-tab[data-tab="${state.activeTab}"]`);
+      const indicator = document.getElementById('nav-pill-indicator');
+      if (!activeBtn || !indicator) return;
+
+      indicator.style.width = `${activeBtn.offsetWidth}px`;
+      indicator.style.transform = `translateX(${activeBtn.offsetLeft - 4}px)`;
+    }
+
+    function switchTab(tabName, scrollToTop = false) {
+      if (state.activeTab === tabName) {
+        if (scrollToTop) window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      const prevSection = document.getElementById(`view-${state.activeTab}`);
+      const nextSection = document.getElementById(`view-${tabName}`);
+      if (!nextSection) return;
+
+      state.activeTab = tabName;
+
+      document.querySelectorAll('.nav-tab').forEach((btn) => {
+        if (btn.dataset.tab === tabName) {
+          btn.classList.remove('text-slate-600', 'dark:text-slate-400');
+          btn.classList.add('text-cyan-600', 'dark:text-cyan-300');
+        } else {
+          btn.classList.remove('text-cyan-600', 'dark:text-cyan-300');
+          btn.classList.add('text-slate-600', 'dark:text-slate-400');
+        }
+      });
+
+      updateNavIndicator();
+
+      if (prevSection) {
+        prevSection.classList.remove('visible-view');
+        setTimeout(() => {
+          prevSection.classList.remove('active-view');
+          nextSection.classList.add('active-view');
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              nextSection.classList.add('visible-view');
+              if (tabName === 'analytics') {
+                animateFeatureBars();
+                renderAnalyticsView(true);
+              } else if (tabName === 'history') {
+                renderHistoryView(true);
+              }
+            });
+          });
+        }, 160);
+      }
+
+      if (scrollToTop) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    /* -------------------------------------------------------------------------
+       4. ANIMATED NUMBER COUNTER UTILITY
+       ------------------------------------------------------------------------- */
+    function animateCounter(el, target, decimals = 0, suffix = '') {
+      if (!el) return;
+      const start = 0;
+      const duration = 650;
+      const startTime = performance.now();
+
+      function tick(now) {
+        const progress = Math.min((now - startTime) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const val = start + (target - start) * eased;
+        el.textContent = `${val.toFixed(decimals)}${suffix}`;
+        if (progress < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          el.textContent = `${target.toFixed(decimals)}${suffix}`;
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+
+    /* -------------------------------------------------------------------------
+       5. LEXICAL FEATURE EXTRACTION
+       ------------------------------------------------------------------------- */
+    function calculateShannonEntropy(str) {
+      const len = str.length;
+      if (!len) return 0;
+      const freq = {};
+      for (const ch of str) freq[ch] = (freq[ch] || 0) + 1;
+      let entropy = 0;
+      for (const k in freq) {
+        const p = freq[k] / len;
+        entropy -= p * Math.log2(p);
+      }
+      return entropy;
+    }
+
+    function analyzeUrlFeatures(rawInput) {
+      let cleanUrl = rawInput.trim();
+      if (!/^https?:\/\//i.test(cleanUrl)) {
+        cleanUrl = 'https://' + cleanUrl;
+      }
+
+      let parsed;
+      try {
+        parsed = new URL(cleanUrl);
+      } catch (e) {
+        parsed = {
+          hostname: cleanUrl.replace(/^https?:\/\//i, '').split('/')[0] || 'unknown-host',
+          protocol: cleanUrl.startsWith('http:') ? 'http:' : 'https:',
+          href: cleanUrl,
+        };
+      }
+
+      const domain = parsed.hostname.toLowerCase();
+      const isHttps = parsed.protocol === 'https:';
+      const hasIp = /^(\d{1,3}\.){3}\d{1,3}$/.test(domain);
+      const urlLength = cleanUrl.length;
+      const subdomainCount = hasIp ? 0 : Math.max(0, domain.split('.').length - 2);
+      const entropy = calculateShannonEntropy(cleanUrl);
+
+      const suspiciousTlds = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top', '.buzz', '.work'];
+      const phishKeywords = ['login', 'verify', 'update', 'account', 'secure', 'banking', 'auth', 'paypal', 'chase', 'signin', 'confirm', 'wallet'];
+      const trustedDomains = ['google.com', 'www.google.com', 'github.com', 'www.github.com', 'youtube.com', 'www.youtube.com', 'wikipedia.org', 'microsoft.com', 'apple.com'];
+
+      const lowerUrl = cleanUrl.toLowerCase();
+      const hasSuspiciousTld = suspiciousTlds.some((tld) => domain.endsWith(tld));
+      const matchedKeywords = phishKeywords.filter((kw) => lowerUrl.includes(kw));
+      const hyphenCount = (domain.match(/-/g) || []).length;
+      const isTrusted = trustedDomains.some((td) => domain === td || domain.endsWith('.' + td));
+
+      let riskScore = 0;
+      if (hasIp) riskScore += 58;
+      if (!isHttps) riskScore += 22;
+      if (hasSuspiciousTld) riskScore += 35;
+      if (hyphenCount >= 2) riskScore += 18;
+      if (subdomainCount >= 2) riskScore += 14;
+      if (matchedKeywords.length >= 2) riskScore += 28;
+      else if (matchedKeywords.length === 1 && !isTrusted) riskScore += 14;
+      if (urlLength > 75 && !isTrusted) riskScore += 10;
+      if (entropy > 4.4 && !isTrusted) riskScore += 10;
+
+      if (isTrusted && !hasIp && isHttps) {
+        riskScore = Math.min(riskScore, 8);
+      }
+
+      const isPhishing = riskScore >= 42;
+      let confidence;
+      if (isPhishing) {
+        confidence = Math.min(99.6, Math.max(78.2, 72 + riskScore * 0.27));
+      } else {
+        confidence = isTrusted
+          ? Math.min(99.4, Math.max(88.5, 98.1 - (urlLength > 40 ? 4.2 : 0)))
+          : Math.min(94.8, Math.max(66.5, 91.5 - riskScore * 0.55));
+      }
+
+      return {
+        url: cleanUrl,
+        domain,
+        status: isPhishing ? 'Phishing' : 'Legitimate',
+        confidence: Number(confidence.toFixed(1)),
+        features: {
+          urlLength,
+          isHttps,
+          hasIp,
+          subdomainCount,
+          entropy: Number(entropy.toFixed(2)),
+          suspiciousTokens: matchedKeywords.length + (hasSuspiciousTld ? 1 : 0),
+        },
+      };
+    }
+
+    function formatCurrentTimestamp() {
+      const now = new Date();
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${months[now.getMonth()]} ${pad(now.getDate())}, ${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    }
+
+    /* -------------------------------------------------------------------------
+       6. SCANNER INTERACTION & DJANGO API INTEGRATION
+       ------------------------------------------------------------------------- */
+    const urlInputEl = document.getElementById('url-input');
+    const clearInputBtn = document.getElementById('clear-input-btn');
+
+    urlInputEl.addEventListener('input', () => {
+      clearInputBtn.classList.toggle('hidden', urlInputEl.value.trim().length === 0);
+    });
+
+    function clearUrlInput() {
+      urlInputEl.value = '';
+      clearInputBtn.classList.add('hidden');
+      urlInputEl.focus();
+    }
+
+    function fillSampleUrl(url) {
+      urlInputEl.value = url;
+      clearInputBtn.classList.remove('hidden');
+      urlInputEl.focus();
+    }
+
+    function rescanUrl(url) {
+      switchTab('scanner', true);
+      urlInputEl.value = url;
+      clearInputBtn.classList.remove('hidden');
+      runUrlAnalysis(url);
+    }
+
+    function handleScanSubmit(event) {
+      event.preventDefault();
+      const val = urlInputEl.value.trim();
+      if (!val) {
+        showToast('Please paste a URL to analyze.', 'warning');
+        urlInputEl.focus();
+        return;
+      }
+      runUrlAnalysis(val);
+    }
+
+    function runUrlAnalysis(rawUrl) {
+      if (state.isScanning) return;
+      state.isScanning = true;
+      state.warpIntensity = 1.0;
+
+      const radarPanel = document.getElementById('radar-scan-panel');
+      const verdictPanel = document.getElementById('verdict-result-panel');
+      const laserLine = document.getElementById('scanner-laser-line');
+      const progressBar = document.getElementById('radar-progress-bar');
+      const percentLabel = document.getElementById('radar-percent');
+      const stepText = document.getElementById('radar-step-text');
+      const analyzeBtn = document.getElementById('analyze-btn');
+
+      verdictPanel.classList.add('hidden');
+      radarPanel.classList.remove('hidden');
+      laserLine.classList.add('scanning');
+      analyzeBtn.disabled = true;
+      analyzeBtn.classList.add('opacity-75', 'cursor-wait');
+
+      const steps = [
+        { pct: 22, text: 'Tokenizing URL structure & parsing lexical entropy...' },
+        { pct: 52, text: 'Inspecting HTTPS/SSL scheme, IP patterns & subdomain depth...' },
+        { pct: 81, text: 'Evaluating suspicious brand tokens across 100 Random Forest trees...' },
+        { pct: 100, text: 'Compiling real-time threat probability verdict...' },
+      ];
+
+      let stepIdx = 0;
+      progressBar.style.width = '14%';
+      percentLabel.textContent = '14%';
+      stepText.textContent = steps[0].text;
+
+      const interval = setInterval(() => {
+        stepIdx++;
+        if (stepIdx < steps.length) {
+          progressBar.style.width = `${steps[stepIdx].pct}%`;
+          percentLabel.textContent = `${steps[stepIdx].pct}%`;
+          stepText.textContent = steps[stepIdx].text;
+        }
+      }, 300);
+
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+      const finishScan = (result) => {
+        clearInterval(interval);
+        state.scans.unshift({
+          id: Date.now(),
+          url: result.url,
+          domain: result.domain,
+          status: result.status,
+          confidence: result.confidence,
+          timestamp: formatCurrentTimestamp(),
+        });
+
+        radarPanel.classList.add('hidden');
+        laserLine.classList.remove('scanning');
+        analyzeBtn.disabled = false;
+        analyzeBtn.classList.remove('opacity-75', 'cursor-wait');
+        state.isScanning = false;
+
+        renderVerdictCard(result);
+        renderAllViews();
+      };
+
+      // Call real Django backend
+      fetch('/api/scan/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ url: rawUrl })
+      })
+      .then(res => res.json())
+      .then(data => {
+        setTimeout(() => {
+          if (data.status === 'success' && data.data) {
+            const d = data.data;
+            finishScan({
+              url: d.url,
+              domain: d.summary.domain,
+              status: d.prediction,
+              confidence: d.confidence,
+              features: {
+                urlLength: d.summary.url_length,
+                isHttps: d.summary.is_https,
+                hasIp: d.summary.is_ip,
+                subdomainCount: d.summary.subdomains_count,
+                entropy: calculateShannonEntropy(d.url),
+                suspiciousTokens: (d.summary.domain.split('.').length > 3 ? 1 : 0) + (d.features.Bank || d.features.Pay || d.features.Crypto ? 1 : 0)
+              }
+            });
+          } else {
+            finishScan(analyzeUrlFeatures(rawUrl));
+          }
+        }, 800);
+      })
+      .catch(() => {
+        setTimeout(() => {
+          finishScan(analyzeUrlFeatures(rawUrl));
+        }, 800);
+      });
+    }
+
+    function renderVerdictCard(res) {
+      const panel = document.getElementById('verdict-result-panel');
+      const isPhish = res.status === 'Phishing';
+
+      const cardClasses = isPhish
+        ? 'bg-rose-500/10 border-rose-500/35 shadow-[0_0_30px_rgba(244,63,94,0.12)]'
+        : 'bg-emerald-500/10 border-emerald-500/35 shadow-[0_0_30px_rgba(16,185,129,0.12)]';
+
+      const strokeColor = isPhish ? '#f43f5e' : '#10b981';
+      const radius = 34;
+      const circumference = 2 * Math.PI * radius;
+      const targetOffset = circumference - (res.confidence / 100) * circumference;
+
+      panel.innerHTML = `
+        <div class="rounded-2xl border p-5 sm:p-6 ${cardClasses} space-y-5 transition-all duration-300">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+            <div class="flex items-start gap-4 min-w-0">
+              <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${isPhish ? 'bg-rose-500 text-white shadow-[0_0_20px_rgba(244,63,94,0.5)]' : 'bg-emerald-500 text-slate-950 shadow-[0_0_20px_rgba(16,185,129,0.5)]'}">
+                ${
+                  isPhish
+                    ? `<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`
+                    : `<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>`
+                }
+              </div>
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="font-display font-extrabold text-xl ${isPhish ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">
+                    ${isPhish ? 'Phishing Threat Detected' : 'Safe / Legitimate URL'}
+                  </span>
+                </div>
+                <p class="font-mono text-xs text-slate-600 dark:text-slate-300 truncate mt-1" title="${escapeHtml(res.url)}">${escapeHtml(res.url)}</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  ${isPhish ? 'High-risk lexical & structural indicators matched known phishing signatures.' : 'Lexical structure and domain signals align with verified legitimate sites.'}
+                </p>
+              </div>
+            </div>
+
+            <!-- Animated Circular Confidence Gauge -->
+            <div class="flex items-center gap-3 self-center sm:self-auto shrink-0">
+              <div class="relative w-20 h-20 flex items-center justify-center">
+                <svg class="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="${radius}" fill="none" stroke="currentColor" stroke-width="6" class="text-slate-200 dark:text-slate-800"></circle>
+                  <circle
+                    id="verdict-gauge-circle"
+                    cx="40" cy="40" r="${radius}" fill="none"
+                    stroke="${strokeColor}" stroke-width="6" stroke-linecap="round"
+                    stroke-dasharray="${circumference.toFixed(2)}"
+                    stroke-dashoffset="${circumference.toFixed(2)}"
+                    class="gauge-progress"
+                  ></circle>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <span id="verdict-gauge-text" class="font-mono text-sm font-extrabold text-slate-900 dark:text-white">0.0%</span>
+                  <span class="font-mono text-[9px] uppercase text-slate-500 dark:text-slate-400">Conf.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6 Extracted Lexical Feature Pills -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-3 border-t ${isPhish ? 'border-rose-500/20' : 'border-emerald-500/20'}">
+            <div class="rounded-xl bg-white/75 dark:bg-slate-900/75 px-3 py-2.5 border border-slate-200/80 dark:border-slate-700/60">
+              <p class="font-mono text-[10px] text-slate-500 dark:text-slate-400 uppercase">URL Length</p>
+              <p class="font-mono text-xs font-bold text-slate-800 dark:text-slate-100 mt-0.5">${res.features.urlLength} chars</p>
+            </div>
+            <div class="rounded-xl bg-white/75 dark:bg-slate-900/75 px-3 py-2.5 border border-slate-200/80 dark:border-slate-700/60">
+              <p class="font-mono text-[10px] text-slate-500 dark:text-slate-400 uppercase">HTTPS / SSL</p>
+              <p class="font-mono text-xs font-bold ${res.features.isHttps ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'} mt-0.5">${res.features.isHttps ? 'Secured' : 'Missing'}</p>
+            </div>
+            <div class="rounded-xl bg-white/75 dark:bg-slate-900/75 px-3 py-2.5 border border-slate-200/80 dark:border-slate-700/60">
+              <p class="font-mono text-[10px] text-slate-500 dark:text-slate-400 uppercase">IP Address</p>
+              <p class="font-mono text-xs font-bold ${res.features.hasIp ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'} mt-0.5">${res.features.hasIp ? 'Direct IP' : 'Hostname'}</p>
+            </div>
+            <div class="rounded-xl bg-white/75 dark:bg-slate-900/75 px-3 py-2.5 border border-slate-200/80 dark:border-slate-700/60">
+              <p class="font-mono text-[10px] text-slate-500 dark:text-slate-400 uppercase">Subdomains</p>
+              <p class="font-mono text-xs font-bold text-slate-800 dark:text-slate-100 mt-0.5">${res.features.subdomainCount} levels</p>
+            </div>
+            <div class="rounded-xl bg-white/75 dark:bg-slate-900/75 px-3 py-2.5 border border-slate-200/80 dark:border-slate-700/60">
+              <p class="font-mono text-[10px] text-slate-500 dark:text-slate-400 uppercase">Entropy</p>
+              <p class="font-mono text-xs font-bold text-slate-800 dark:text-slate-100 mt-0.5">${res.features.entropy} bits</p>
+            </div>
+            <div class="rounded-xl bg-white/75 dark:bg-slate-900/75 px-3 py-2.5 border border-slate-200/80 dark:border-slate-700/60">
+              <p class="font-mono text-[10px] text-slate-500 dark:text-slate-400 uppercase">Susp. Tokens</p>
+              <p class="font-mono text-xs font-bold ${res.features.suspiciousTokens > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'} mt-0.5">${res.features.suspiciousTokens} found</p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      panel.classList.remove('hidden');
+
+      requestAnimationFrame(() => {
+        const circle = document.getElementById('verdict-gauge-circle');
+        if (circle) circle.style.strokeDashoffset = targetOffset.toFixed(2);
+        animateCounter(document.getElementById('verdict-gauge-text'), res.confidence, 1, '%');
+      });
+    }
+
+    /* -------------------------------------------------------------------------
+       7. RENDERING FUNCTIONS FOR ALL 3 VIEWS
+       ------------------------------------------------------------------------- */
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function renderRecentScans() {
+      const container = document.getElementById('recent-scans-list');
+      const recent = state.scans.slice(0, 5);
+
+      if (recent.length === 0) {
+        container.innerHTML = `
+          <div class="py-10 text-center text-sm text-slate-500 dark:text-slate-400 font-mono">
+            No scans recorded yet. Paste a URL above to begin real-time threat detection.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = recent
+        .map((scan) => {
+          const isPhish = scan.status === 'Phishing';
+          const dotColor = isPhish
+            ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.8)]'
+            : 'bg-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.8)]';
+          const badgeStyle = isPhish
+            ? 'bg-rose-500/15 text-rose-600 dark:text-rose-300 border-rose-500/30'
+            : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30';
+
+          return `
+            <div class="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group hover:bg-slate-200/40 dark:hover:bg-slate-800/40 px-2.5 -mx-2.5 rounded-xl transition-colors">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="w-2.5 h-2.5 rounded-full ${dotColor} shrink-0"></span>
+                <span class="font-mono text-xs sm:text-sm text-slate-700 dark:text-slate-200 truncate">${escapeHtml(scan.url)}</span>
+              </div>
+              <div class="flex items-center justify-end gap-2.5 shrink-0">
+                <span class="font-mono text-xs font-semibold px-3 py-1 rounded-lg border ${badgeStyle}">
+                  ${scan.status} (${scan.confidence.toFixed(1)}%)
+                </span>
+                <button
+                  onclick="rescanUrl('${escapeHtml(scan.url)}')"
+                  title="Re-scan URL"
+                  class="p-2 rounded-lg text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 hover:bg-cyan-500/10 transition-all cursor-pointer"
+                >
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                    <path d="M3 3v5h5"></path>
+                    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+                    <path d="M16 16h5v5"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    function setHistoryFilter(filter) {
+      state.historyFilter = filter;
+      renderHistoryView(false);
+    }
+
+    function renderHistoryView(animateNumbers = false) {
+      const total = state.scans.length;
+      const phishing = state.scans.filter((s) => s.status === 'Phishing').length;
+      const legit = total - phishing;
+
+      const elTotal = document.getElementById('kpi-total-scans');
+      const elPhish = document.getElementById('kpi-phishing-scans');
+      const elLegit = document.getElementById('kpi-legit-scans');
+
+      if (animateNumbers) {
+        animateCounter(elTotal, total, 0);
+        animateCounter(elPhish, phishing, 0);
+        animateCounter(elLegit, legit, 0);
+      } else {
+        elTotal.textContent = total;
+        elPhish.textContent = phishing;
+        elLegit.textContent = legit;
+      }
+
+      const btnAll = document.getElementById('filter-btn-all');
+      const btnPhish = document.getElementById('filter-btn-phishing');
+      const btnLegit = document.getElementById('filter-btn-legitimate');
+
+      btnAll.textContent = `All (${total})`;
+      btnPhish.textContent = `Phishing (${phishing})`;
+      btnLegit.textContent = `Legitimate (${legit})`;
+
+      [
+        { el: btnAll, key: 'all' },
+        { el: btnPhish, key: 'phishing' },
+        { el: btnLegit, key: 'legitimate' },
+      ].forEach(({ el, key }) => {
+        if (state.historyFilter === key) {
+          el.className = 'filter-pill px-3.5 py-2 rounded-xl font-mono text-xs font-semibold bg-cyan-500/15 text-cyan-600 dark:text-cyan-300 border border-cyan-500/45 shadow-[0_0_12px_rgba(6,182,212,0.18)] transition-all cursor-pointer';
+        } else {
+          el.className = 'filter-pill px-3.5 py-2 rounded-xl font-mono text-xs font-semibold bg-white/70 dark:bg-slate-900/60 hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700/70 transition-all cursor-pointer';
+        }
+      });
+
+      renderHistoryTable();
+    }
+
+    function renderHistoryTable() {
+      const tbody = document.getElementById('history-table-body');
+      const query = (document.getElementById('history-search-input')?.value || '').trim().toLowerCase();
+
+      const filtered = state.scans.filter((scan) => {
+        if (state.historyFilter === 'phishing' && scan.status !== 'Phishing') return false;
+        if (state.historyFilter === 'legitimate' && scan.status !== 'Legitimate') return false;
+        if (query && !scan.url.toLowerCase().includes(query) && !scan.domain.toLowerCase().includes(query)) {
+          return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="py-12 text-center font-mono text-xs text-slate-500 dark:text-slate-400">
+              No matching URL scan logs found.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered
+        .map((scan) => {
+          const isPhish = scan.status === 'Phishing';
+          const pill = isPhish
+            ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/15 border border-rose-500/35 text-rose-600 dark:text-rose-300 font-mono text-xs font-semibold">
+                 <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Phishing
+               </span>`
+            : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/35 text-emerald-700 dark:text-emerald-300 font-mono text-xs font-semibold">
+                 <svg class="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><polyline points="20 6 9 17 4 12"></polyline></svg> Legitimate
+               </span>`;
+
+          return `
+            <tr class="hover:bg-cyan-500/5 transition-colors">
+              <td class="py-4 px-5 whitespace-nowrap">${pill}</td>
+              <td class="py-4 px-5 max-w-xs sm:max-w-sm">
+                <div class="font-mono text-xs text-slate-800 dark:text-slate-200 truncate" title="${escapeHtml(scan.url)}">${escapeHtml(scan.url)}</div>
+              </td>
+              <td class="py-4 px-5 font-mono text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">${escapeHtml(scan.domain)}</td>
+              <td class="py-4 px-5 font-mono text-xs font-bold ${isPhish ? 'text-rose-500' : 'text-emerald-600 dark:text-emerald-400'} whitespace-nowrap">${scan.confidence.toFixed(1)}%</td>
+              <td class="py-4 px-5 font-mono text-xs text-slate-500 dark:text-slate-400 text-right whitespace-nowrap">${escapeHtml(scan.timestamp)}</td>
+            </tr>
+          `;
+        })
+        .join('');
+    }
+
+    function renderAnalyticsView(animateNumbers = false) {
+      const total = state.scans.length;
+      const phishing = state.scans.filter((s) => s.status === 'Phishing').length;
+      const legit = total - phishing;
+
+      const phishPct = total > 0 ? (phishing / total) * 100 : 0;
+      const legitPct = total > 0 ? (legit / total) * 100 : 0;
+
+      const phishPctEl = document.getElementById('analytics-phish-pct');
+      const legitPctEl = document.getElementById('analytics-legit-pct');
+
+      if (animateNumbers) {
+        animateCounter(phishPctEl, phishPct, 1, '%');
+        animateCounter(legitPctEl, legitPct, 1, '%');
+      } else {
+        phishPctEl.textContent = `${phishPct.toFixed(1)}%`;
+        legitPctEl.textContent = `${legitPct.toFixed(1)}%`;
+      }
+
+      document.getElementById('analytics-phish-count').textContent = `Phishing Detected (${phishing})`;
+      document.getElementById('analytics-legit-count').textContent = `Legitimate Sites (${legit})`;
+
+      const barPhish = document.getElementById('traffic-bar-phish');
+      const barLegit = document.getElementById('traffic-bar-legit');
+      barPhish.style.width = `${phishPct}%`;
+      barLegit.style.width = `${legitPct}%`;
+
+      if (phishPct > 0 && legitPct > 0) {
+        barLegit.classList.remove('rounded-full');
+        barLegit.classList.add('rounded-r-full');
+      } else {
+        barLegit.classList.remove('rounded-r-full');
+        barLegit.classList.add('rounded-full');
+      }
+    }
+
+    function initFeatureImportanceChart() {
+      const container = document.getElementById('feature-importance-chart');
+      container.innerHTML = state.featureImportance
+        .map(
+          (f, idx) => `
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-mono font-semibold text-slate-700 dark:text-slate-200">${f.name}</span>
+              <span class="font-mono font-bold text-slate-500 dark:text-cyan-300">${f.weight.toFixed(1)}%</span>
+            </div>
+            <div class="w-full h-2.5 rounded-full bg-slate-200/80 dark:bg-slate-900/90 border border-slate-300/50 dark:border-slate-800 overflow-hidden">
+              <div
+                id="feat-bar-${idx}"
+                data-target="${(f.weight / 26) * 100}"
+                class="feature-bar-fill h-full rounded-full bg-gradient-to-r ${f.color} ${f.glow}"
+                style="width: 0%"
+              ></div>
+            </div>
+          </div>
+        `
+        )
+        .join('');
+    }
+
+    function animateFeatureBars() {
+      state.featureImportance.forEach((_, idx) => {
+        const bar = document.getElementById(`feat-bar-${idx}`);
+        if (bar) {
+          bar.style.width = '0%';
+          setTimeout(() => {
+            bar.style.width = `${bar.dataset.target}%`;
+          }, 90 + idx * 80);
+        }
+      });
+    }
+
+    function renderAllViews() {
+      renderRecentScans();
+      renderHistoryView(false);
+      renderAnalyticsView(false);
+    }
+
+    /* -------------------------------------------------------------------------
+       8. CLEAR HISTORY MODAL & TOAST SYSTEM
+       ------------------------------------------------------------------------- */
+    function openClearModal() {
+      const modal = document.getElementById('clear-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeClearModal() {
+      const modal = document.getElementById('clear-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function confirmClearHistory() {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+      fetch('/history/clear/', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrfToken,
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      }).finally(() => {
+        state.scans = [];
+        closeClearModal();
+        renderAllViews();
+        document.getElementById('verdict-result-panel').classList.add('hidden');
+        showToast('Audit history cleared.', 'info');
+      });
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const accent =
+        type === 'warning'
+          ? 'border-amber-500/40 bg-amber-50/95 dark:bg-slate-900/95 text-amber-700 dark:text-amber-300'
+          : 'border-cyan-500/35 bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-100';
+
+      toast.className = `pointer-events-auto px-4 py-3 rounded-2xl border shadow-xl backdrop-blur-md font-sans text-xs font-semibold flex items-center gap-2.5 transition-all duration-300 translate-y-3 opacity-0 ${accent}`;
+      toast.innerHTML = `<span class="w-2 h-2 rounded-full ${type === 'warning' ? 'bg-amber-400' : 'bg-cyan-400'}"></span><span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-3', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 2600);
+    }
+
+    /* -------------------------------------------------------------------------
+       9. MAGNETIC 3D TILT & RADIAL SPOTLIGHT
+       ------------------------------------------------------------------------- */
+    function initMagneticTilt() {
+      const cards = document.querySelectorAll('.tilt-card');
+      cards.forEach((card) => {
+        card.addEventListener('mousemove', (e) => {
+          if (window.innerWidth < 768) return;
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+
+          const rotateX = ((y - centerY) / centerY) * -3.5;
+          const rotateY = ((x - centerX) / centerX) * 3.5;
+
+          card.style.transform = `perspective(1100px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(5px)`;
+          card.style.setProperty('--mx', `${(x / rect.width) * 100}%`);
+          card.style.setProperty('--my', `${(y / rect.height) * 100}%`);
+        });
+
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = 'perspective(1100px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
+        });
+      });
+    }
+
+    /* -------------------------------------------------------------------------
+       10. INTERACTIVE 3D HTML5 CANVAS
+       ------------------------------------------------------------------------- */
+    function initSpatialCanvas() {
+      const canvas = document.getElementById('spatial-canvas');
+      const ctx = canvas.getContext('2d');
+      let width = (canvas.width = window.innerWidth);
+      let height = (canvas.height = window.innerHeight);
+
+      const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
+
+      window.addEventListener('mousemove', (e) => {
+        mouse.targetX = (e.clientX / width - 0.5) * 2;
+        mouse.targetY = (e.clientY / height - 0.5) * 2;
+      });
+
+      window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      });
+
+      const nodeCount = Math.min(62, Math.floor((width * height) / 22000));
+      const nodes = Array.from({ length: nodeCount }, () => ({
+        x: (Math.random() - 0.5) * 1500,
+        y: (Math.random() - 0.5) * 950,
+        z: Math.random() * 680 + 100,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: (Math.random() - 0.5) * 0.35,
+        vz: (Math.random() - 0.5) * 0.45,
+        r: Math.random() * 2.3 + 1.2,
+        color: Math.random() > 0.45 ? '6, 182, 212' : Math.random() > 0.5 ? '16, 185, 129' : '99, 102, 241',
+      }));
+
+      const phi = (1 + Math.sqrt(5)) / 2;
+      const icoVertices = [
+        [-1, phi, 0], [1, phi, 0], [-1, -phi, 0], [1, -phi, 0],
+        [0, -1, phi], [0, 1, phi], [0, -1, -phi], [0, 1, -phi],
+        [phi, 0, -1], [phi, 0, 1], [-phi, 0, -1], [-phi, 0, 1],
+      ].map(([x, y, z]) => {
+        const len = Math.hypot(x, y, z);
+        return { x: x / len, y: y / len, z: z / len };
+      });
+
+      const icoEdges = [];
+      for (let i = 0; i < icoVertices.length; i++) {
+        for (let j = i + 1; j < icoVertices.length; j++) {
+          const d = Math.hypot(
+            icoVertices[i].x - icoVertices[j].x,
+            icoVertices[i].y - icoVertices[j].y,
+            icoVertices[i].z - icoVertices[j].z
+          );
+          if (d < 1.15) icoEdges.push([i, j]);
+        }
+      }
+
+      let angle = 0;
+
+      function project3D(x, y, z, fov = 560) {
+        const scale = fov / Math.max(40, fov + z);
+        return {
+          px: width / 2 + x * scale,
+          py: height / 2 + y * scale,
+          scale,
+        };
+      }
+
+      function drawIcosahedron(cx, cy, radius, rotX, rotY, strokeColor, glowColor) {
+        const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+        const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+
+        const projected = icoVertices.map((v) => {
+          const x1 = v.x * cosY - v.z * sinY;
+          const z1 = v.x * sinY + v.z * cosY;
+          const y2 = v.y * cosX - z1 * sinX;
+          const z2 = v.y * sinX + z1 * cosX;
+          return project3D(cx + x1 * radius, cy + y2 * radius, 250 + z2 * radius);
+        });
+
+        ctx.save();
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 1.1;
+        ctx.beginPath();
+        icoEdges.forEach(([a, b]) => {
+          ctx.moveTo(projected[a].px, projected[a].py);
+          ctx.lineTo(projected[b].px, projected[b].py);
+        });
+        ctx.stroke();
+
+        ctx.fillStyle = glowColor;
+        projected.forEach((p) => {
+          ctx.beginPath();
+          ctx.arc(p.px, p.py, Math.max(1.5, 2.3 * p.scale), 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.restore();
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, width, height);
+
+        mouse.x += (mouse.targetX - mouse.x) * 0.045;
+        mouse.y += (mouse.targetY - mouse.y) * 0.045;
+
+        if (!state.isScanning && state.warpIntensity > 0.005) {
+          state.warpIntensity *= 0.94;
+        } else if (!state.isScanning) {
+          state.warpIntensity = 0;
+        }
+
+        const speedBoost = 1 + state.warpIntensity * 6.5;
+        angle += 0.004 * speedBoost;
+
+        const isDark = state.theme === 'dark';
+        const shapeAlpha = isDark ? 0.16 + state.warpIntensity * 0.18 : 0.12 + state.warpIntensity * 0.12;
+
+        drawIcosahedron(
+          -width * 0.37 + mouse.x * 60,
+          -height * 0.15 + mouse.y * 42,
+          105 + state.warpIntensity * 16,
+          angle * 0.85 + mouse.y * 0.35,
+          angle * 1.1 + mouse.x * 0.35,
+          `rgba(6, 182, 212, ${shapeAlpha.toFixed(3)})`,
+          `rgba(34, 211, 238, ${(shapeAlpha * 2).toFixed(3)})`
+        );
+
+        drawIcosahedron(
+          width * 0.38 + mouse.x * 50,
+          height * 0.22 + mouse.y * 38,
+          120 + state.warpIntensity * 18,
+          -angle * 0.75 + mouse.y * 0.3,
+          angle * 0.9 - mouse.x * 0.3,
+          `rgba(16, 185, 129, ${shapeAlpha.toFixed(3)})`,
+          `rgba(52, 211, 153, ${(shapeAlpha * 2).toFixed(3)})`
+        );
+
+        const projectedNodes = nodes.map((n) => {
+          n.x += n.vx * (1 + state.warpIntensity * 2.5);
+          n.y += n.vy * (1 + state.warpIntensity * 2.5);
+          n.z -= (n.vz + state.warpIntensity * 12);
+
+          if (n.x > 800 || n.x < -800) n.vx *= -1;
+          if (n.y > 520 || n.y < -520) n.vy *= -1;
+          if (n.z < 60) n.z = 760;
+          if (n.z > 780) n.z = 80;
+
+          const pxOffset = mouse.x * (650 / n.z) * 32;
+          const pyOffset = mouse.y * (650 / n.z) * 24;
+
+          const proj = project3D(n.x + pxOffset, n.y + pyOffset, n.z);
+          return { ...proj, r: n.r, color: n.color, z: n.z };
+        });
+
+        const maxDist = 148;
+        for (let i = 0; i < projectedNodes.length; i++) {
+          for (let j = i + 1; j < projectedNodes.length; j++) {
+            const dx = projectedNodes[i].px - projectedNodes[j].px;
+            const dy = projectedNodes[i].py - projectedNodes[j].py;
+            const dist = Math.hypot(dx, dy);
+            if (dist < maxDist) {
+              const baseLine = isDark ? 0.22 : 0.14;
+              const alpha = (1 - dist / maxDist) * (baseLine + state.warpIntensity * 0.18);
+              ctx.strokeStyle = `rgba(6, 182, 212, ${alpha.toFixed(3)})`;
+              ctx.lineWidth = 0.85;
+              ctx.beginPath();
+              ctx.moveTo(projectedNodes[i].px, projectedNodes[i].py);
+              ctx.lineTo(projectedNodes[j].px, projectedNodes[j].py);
+              ctx.stroke();
+            }
+          }
+        }
+
+        projectedNodes.forEach((p) => {
+          const alpha = Math.max(0.18, Math.min(0.85, p.scale * (isDark ? 0.78 : 0.55)));
+          const radius = Math.max(1.2, p.r * p.scale * (1 + state.warpIntensity * 0.4));
+
+          if (isDark && p.scale > 0.65) {
+            ctx.beginPath();
+            ctx.arc(p.px, p.py, radius * 2.8, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${p.color}, ${(alpha * 0.22).toFixed(3)})`;
+            ctx.fill();
+          }
+
+          ctx.beginPath();
+          ctx.arc(p.px, p.py, radius, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${p.color}, ${alpha.toFixed(3)})`;
+          ctx.fill();
+        });
+
+        requestAnimationFrame(animate);
+      }
+
+      animate();
+    }
+
+    /* -------------------------------------------------------------------------
+       11. INITIALIZATION ON WINDOW LOAD
+       ------------------------------------------------------------------------- */
+    window.addEventListener('load', () => {
+      // Restore user theme preference (default to dark)
+      const savedTheme = localStorage.getItem('phishguard-theme') || 'dark';
+      applyTheme(savedTheme);
+
+      initFeatureImportanceChart();
+      renderAllViews();
+      initMagneticTilt();
+      initSpatialCanvas();
+      updateNavIndicator();
+
+      if (state.activeTab && state.activeTab !== 'scanner') {
+        switchTab(state.activeTab);
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      updateNavIndicator();
+    });
+  </script>
+</body>
+</html>

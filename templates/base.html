@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Intelligent Phishing URL Detector{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            bg: '#0a0e17',
+                            card: '#121826',
+                            cardHover: '#182133',
+                            border: '#1f293d',
+                            cyan: '#06b6d4',
+                            cyanGlow: '#0891b2',
+                            emerald: '#10b981',
+                            rose: '#f43f5e',
+                            amber: '#f59e0b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/custom.css">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0a0e17;
+            color: #e2e8f0;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .glow-cyan {
+            box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.4);
+        }
+        .glow-red {
+            box-shadow: 0 0 30px -5px rgba(244, 63, 94, 0.4);
+        }
+        .glow-green {
+            box-shadow: 0 0 30px -5px rgba(16, 185, 129, 0.4);
+        }
+        .radar-grid {
+            background-size: 30px 30px;
+            background-image: 
+                linear-gradient(to right, rgba(31, 41, 61, 0.35) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(31, 41, 61, 0.35) 1px, transparent 1px);
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col radar-grid antialiased selection:bg-cyan-500 selection:text-white">
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-cyber-border bg-cyber-bg/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- Brand Logo -->
+            <a href="{% url 'index' %}" class="flex items-center space-x-3 group">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-emerald-500 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-shield-halved text-xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-lg text-white tracking-tight">PhishGuard<span class="text-cyan-400">.AI</span></span>
+                        <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">v2.0</span>
+                    </div>
+                    <p class="text-[11px] text-gray-400">Intelligent URL Threat Detector</p>
+                </div>
+            </a>
+
+            <!-- Navigation Links -->
+            <nav class="hidden md:flex items-center space-x-1">
+                <a href="{% url 'index' %}" class="px-3.5 py-2 rounded-lg text-sm font-medium transition-colors {% if request.resolver_match.url_name == 'index' %}bg-cyber-card text-cyan-400 border border-cyber-border{% else %}text-gray-400 hover:text-white hover:bg-cyber-card/50{% endif %}">
+                    <i class="fa-solid fa-radar mr-2"></i>Scanner
+                </a>
+                <a href="{% url 'history' %}" class="px-3.5 py-2 rounded-lg text-sm font-medium transition-colors {% if request.resolver_match.url_name == 'history' %}bg-cyber-card text-cyan-400 border border-cyber-border{% else %}text-gray-400 hover:text-white hover:bg-cyber-card/50{% endif %}">
+                    <i class="fa-solid fa-clock-rotate-left mr-2"></i>History
+                </a>
+                <a href="{% url 'analytics' %}" class="px-3.5 py-2 rounded-lg text-sm font-medium transition-colors {% if request.resolver_match.url_name == 'analytics' %}bg-cyber-card text-cyan-400 border border-cyber-border{% else %}text-gray-400 hover:text-white hover:bg-cyber-card/50{% endif %}">
+                    <i class="fa-solid fa-chart-pie mr-2"></i>Analytics
+                </a>
+            </nav>
+
+            <!-- Status Indicator -->
+            <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-800/80 text-emerald-400 text-xs font-mono">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>RandomForest Engine Online</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-cyber-border bg-cyber-card/40 mt-16 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between text-xs text-gray-500 gap-4">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-shield-virus text-cyan-400 text-sm"></i>
+                <span>Trained on <strong>PhiUSIIL Phishing URL Dataset</strong> (56 Features)</span>
+            </div>
+            <div>
+                <span>Intelligent Phishing URL Detection System &bull; Powered by Django &amp; Scikit-Learn</span>
+            </div>
+            <div class="flex space-x-4">
+                <a href="{% url 'index' %}" class="hover:text-cyan-400 transition-colors">Scanner</a>
+                <a href="{% url 'history' %}" class="hover:text-cyan-400 transition-colors">Scan Logs</a>
+                <a href="{% url 'analytics' %}" class="hover:text-cyan-400 transition-colors">Model Metrics</a>
+            </div>
+        </div>
+    </footer>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
