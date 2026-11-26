@@ -41,6 +41,101 @@
         </div>
     </div>
 
+    <!-- Decision Logic & Risk Thresholds Card -->
+    <div class="bg-cyber-card border border-cyber-border rounded-2xl p-6 sm:p-7 mb-8 space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-scale-balanced text-cyan-400 text-lg"></i>
+                <div>
+                    <h3 class="text-base font-bold text-white">Decision Logic &amp; Risk Thresholds</h3>
+                    <p class="text-xs text-gray-400 mt-0.5">Trained and calibrated on the <strong>235,795 URLs</strong> benchmark</p>
+                </div>
+            </div>
+            <span class="font-mono text-xs font-semibold px-3 py-1 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                235,795 URLs
+            </span>
+        </div>
+
+        <!-- Threshold Mathematical Piecewise Block -->
+        <div class="rounded-xl bg-cyber-bg/80 border border-cyber-border p-5 space-y-3">
+            <div class="flex items-center justify-between">
+                <span class="font-mono text-xs font-bold uppercase tracking-wider text-gray-400">Threshold Condition</span>
+                <span class="font-mono text-xs text-cyan-400">RandomForest Ensemble Boundary</span>
+            </div>
+
+            <div class="font-mono text-xs sm:text-sm text-gray-200 overflow-x-auto py-2">
+                <div class="flex items-center space-x-3">
+                    <span class="font-bold text-cyan-400">Classification</span>
+                    <span class="text-lg text-gray-400">=</span>
+                    <div class="border-l-2 border-cyan-500 pl-3.5 space-y-2 py-0.5">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-md bg-rose-500/15 text-rose-400 font-bold text-xs border border-rose-500/30">Phishing</span>
+                            <span class="text-gray-400">if</span>
+                            <span class="font-semibold text-white">P(Phishing) &ge; 50.0%</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 font-bold text-xs border border-emerald-500/30">Legitimate</span>
+                            <span class="text-gray-400">if</span>
+                            <span class="font-semibold text-white">P(Phishing) &lt; 50.0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Risk Level Breakdown Cards -->
+        <div class="space-y-3">
+            <h4 class="font-mono text-xs font-bold uppercase tracking-wider text-gray-400">Risk Level Breakdown</h4>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- High Threat -->
+                <div class="rounded-xl p-4.5 bg-rose-500/10 border border-rose-500/30 flex flex-col justify-between space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-300 font-mono text-xs font-bold border border-rose-500/40">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                            <span>High Threat</span>
+                        </span>
+                        <span class="font-mono text-xs font-extrabold text-rose-400">&gt; 75%</span>
+                    </div>
+                    <div>
+                        <p class="font-mono text-xs font-bold text-white">Phishing probability &gt; 75%</p>
+                        <p class="text-xs text-gray-400 mt-1 leading-relaxed">Critical threat. High-confidence indicators like raw IPs, severe obfuscation, and brand impersonation.</p>
+                    </div>
+                </div>
+
+                <!-- Moderate Risk -->
+                <div class="rounded-xl p-4.5 bg-amber-500/10 border border-amber-500/30 flex flex-col justify-between space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 font-mono text-xs font-bold border border-amber-500/40">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                            <span>Moderate Risk</span>
+                        </span>
+                        <span class="font-mono text-xs font-extrabold text-amber-400">50% &ndash; 75%</span>
+                    </div>
+                    <div>
+                        <p class="font-mono text-xs font-bold text-white">Phishing probability 50% &ndash; 75%</p>
+                        <p class="text-xs text-gray-400 mt-1 leading-relaxed">Elevated caution. Suspicious structural tokens, unusual TLDs, or multiple subdomain levels present.</p>
+                    </div>
+                </div>
+
+                <!-- Low Caution / Safe -->
+                <div class="rounded-xl p-4.5 bg-emerald-500/10 border border-emerald-500/30 flex flex-col justify-between space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-xs font-bold border border-emerald-500/40">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            <span>Low Caution / Safe</span>
+                        </span>
+                        <span class="font-mono text-xs font-extrabold text-emerald-400">&gt; 50%</span>
+                    </div>
+                    <div>
+                        <p class="font-mono text-xs font-bold text-white">Legitimate probability &gt; 50%</p>
+                        <p class="text-xs text-gray-400 mt-1 leading-relaxed">Verified safe structure. Clean domain history, valid SSL/TLS, and low lexical entropy signals.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Analytics Breakdown Cards -->
     <!-- Live Traffic Ratio -->
     <div class="bg-cyber-card border border-cyber-border rounded-2xl p-6 mb-8">
